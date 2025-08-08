@@ -1,0 +1,46 @@
+name: Build and Deploy to AWS
+
+on:
+  # push:
+    # branches: [main]
+  workflow_dispatch:
+  
+env:
+  AWS_REGION: us-east-1
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  terraform-deploy:
+    runs-on: ubuntu-latest
+
+    # defaults:
+    #   run:
+    #     working-directory: usecase8
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # OIDC AWS creds
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::436450225331:role/oidc-assume-role
+          aws-region: ${{ env.AWS_REGION }}
+
+     
+      # Terraform deploy
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init -reconfigure
+
+      - name: Terraform Plan
+        run: terraform plan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
